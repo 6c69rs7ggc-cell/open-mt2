@@ -40,14 +40,18 @@ describe('Security — dead state legality', function () {
     // Mobs reach the world through the area spawn queue, so it takes a few ticks
     // before there is a live one to be killed by.
     async function liveMonster() {
-        let monster = harness.findMonster();
-        for (let attempt = 0; attempt < 20 && !monster?.getPoint(PointsEnum.HEALTH); attempt++) {
-            await new Promise((resolve) => setTimeout(resolve, 250));
-            monster = harness.findMonster();
-        }
+        // Use a living monster that is still inside its owning area. Monsters
+        // can chase across area boundaries while retaining their original area;
+        // seeding a player at those stale coordinates makes World.spawn reject
+        // the player, causing this setup to fail intermittently.
+        const monster = await harness.awaitMonsterInPlace();
 
-        expect(monster, 'setup: the world spawned a monster').to.not.equal(undefined);
+        expect(monster, 'setup: the world spawned a living monster inside its area').to.not.equal(undefined);
         expect(monster!.getPoint(PointsEnum.HEALTH), 'setup: the monster is alive').to.be.greaterThan(0);
+        expect(
+            harness.areaAt(monster!.getPositionX(), monster!.getPositionY()),
+            'setup: the monster coordinates belong to its current area',
+        ).to.equal(monster!.getArea());
         return monster!;
     }
 
