@@ -4,6 +4,7 @@ import Behavior from '@/core/domain/entities/game/mob/behavior/Behavior';
 import MapAttributeGrid from '@/core/util/MapAttributeGrid';
 import { MapAttributeFlagEnum } from '@/core/enum/MapAttributeFlagEnum';
 import { EntityStateEnum } from '@/core/enum/EntityStateEnum';
+import MathUtil from '@/core/util/MathUtil';
 
 const CELL_SIZE = 100;
 
@@ -76,6 +77,10 @@ describe('Behavior map attribute awareness', () => {
             const behavior = new Behavior(monster as any);
             behavior.init();
 
+            // Keep the random destination inside the test grid: (600,600),
+            // with a free midpoint at (550,550). This avoids out-of-grid
+            // random destinations making the assertion flaky.
+            sinon.stub(MathUtil, 'getRandomInt').returns(100);
             wander(behavior);
 
             expect(monster.goto.called).to.be.equal(false);
