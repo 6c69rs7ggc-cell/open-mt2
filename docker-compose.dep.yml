@@ -6,8 +6,9 @@ services:
     container_name: cache
     env_file:
       - ./.env
+    # Development dependency ports must only be reachable from this machine.
     ports:
-      - $CACHE_PORT:$CACHE_PORT
+      - "127.0.0.1:${CACHE_PORT}:6379"
 
   database:
     image: mysql:5.7
@@ -16,6 +17,6 @@ services:
     env_file:
       - ./.env
     environment:
-      MYSQL_ROOT_PASSWORD: $DB_ROOT_PASSWORD
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     ports:
-      - $DB_PORT:$DB_PORT
+      - "127.0.0.1:${DB_PORT}:3306"
