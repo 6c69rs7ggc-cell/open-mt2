@@ -42,6 +42,11 @@ jobs:
           $jpegSource = [regex]::Replace($jpegSource, '\bsize\b', 'jpegInputSize')
           Set-Content -Path $jpeg -Value $jpegSource -NoNewline
 
+          $resource = "client-source/source/UserInterface/UserInterface.rc"
+          $resourceSource = Get-Content $resource -Raw
+          $resourceSource = $resourceSource.Replace('#include "afxres.h"', "#include <winres.h>`r`n#ifndef IDC_STATIC`r`n#define IDC_STATIC -1`r`n#endif")
+          Set-Content -Path $resource -Value $resourceSource -NoNewline
+
           $miles = "client-source/vs_files/MilesLib/MilesLib.vcxproj"
           $projectSource = Get-Content $miles -Raw
           if ($projectSource -notmatch 'WINDOWS_IGNORE_PACKING_MISMATCH') {
