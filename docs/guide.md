@@ -17,7 +17,7 @@ PORT_AUTH			= 11002
 PORT_MARK			= 13001
 ```
 
-ps: If you changed the ports in the .env, put the relative values ​​here
+ps: If you changed the ports in the .env, put the relative values here. For a client on another device, replace `localhost` with the server's reachable IP/domain. Set `REAL_SERVER_ADDRESS` in `.env` to that same reachable address so the character list points to the game server correctly.
 
 ## Run
 
@@ -48,3 +48,4 @@ ps: `npm run dev:auth:debug` / `npm run dev:game:debug` run the same servers wit
 login: admin
 password: admin
 ```
+**Development only:** the example `admin/admin` credentials are not safe for a public server. Change `SEED_ADMIN_PASSWORD` before creating the seed account, and never expose a server using example credentials to the internet. For current client limitations, see [client compatibility status](client-compatibility.md).
