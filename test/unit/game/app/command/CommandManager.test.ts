@@ -50,7 +50,7 @@ describe('CommandManager', () => {
     it('should list all commands when /help is used', async () => {
         await commandManager.execute({ message: '/help', player: playerStub });
 
-        expect(playerStub.chat.calledOnce).to.be.true;
+        expect(playerStub.chat.calledTwice).to.be.true;
         expect(
             playerStub.chat.calledWith({
                 message: `Command: ${commandStub.getName()} - Description: ${commandStub.getDescription()} - Example: ${commandStub.getExample()} `,
