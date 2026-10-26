@@ -75,6 +75,7 @@ Metin2 are copyrighted by [Webzen](http://webzen.com/ "Webzen").
 ## Getting Started
 
 - Follow this [**guide**](docs/guide.md)
+- Check [**TMP4/40k client compatibility status**](docs/client-compatibility.md) before attempting a real client connection.
 
 ## Packets
 
