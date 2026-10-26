@@ -4,15 +4,26 @@ import Logger from '@/core/infra/logger/Logger';
 import Command from '@/game/domain/command/Command';
 import { CommandMapValue } from '@/game/domain/command/Commands';
 
+const PUBLIC_COMMANDS = new Set(['/help', '/logout']);
+
 export default class CommandManager {
     private readonly logger: Logger;
     private readonly commands: Map<string, CommandMapValue<Command>>;
     private readonly container;
+    private readonly gmAccountIds: Set<number>;
 
     constructor(container: { logger: Logger; commands: Map<string, CommandMapValue<Command>>; [key: string]: any }) {
         this.logger = container.logger;
         this.commands = container.commands;
         this.container = container;
+        // Empty by default: privileged commands are denied until the owner explicitly
+        // configures their account ID in GM_ACCOUNT_IDS. Never trust a client-supplied name.
+        this.gmAccountIds = new Set(
+            (process.env.GM_ACCOUNT_IDS || '')
+                .split(',')
+                .map((value) => Number(value.trim()))
+                .filter((value) => Number.isSafeInteger(value) && value > 0),
+        );
     }
 
     async execute({ message, player }: { message: string; player: Player }) {
@@ -29,7 +40,6 @@ export default class CommandManager {
         }
 
         const [commandName, ...args] = message.split(' ');
-
         const commandBuilder = this.commands.get(commandName);
 
         if (!commandBuilder) {
@@ -41,8 +51,16 @@ export default class CommandManager {
             return;
         }
 
-        const { command: Command, createHandler } = commandBuilder;
+        if (!PUBLIC_COMMANDS.has(commandName) && !this.gmAccountIds.has(player.getAccountId())) {
+            this.logger.info(`[CommandManager] Denied privileged command ${commandName} for account ${player.getAccountId()}`);
+            player.chat({
+                message: '[SYSTEM] You do not have permission to use this command.',
+                messageType: ChatMessageTypeEnum.INFO,
+            });
+            return;
+        }
 
+        const { command: Command, createHandler } = commandBuilder;
         const command = new Command({ args });
         const commandHandler = createHandler(this.container);
         await commandHandler.execute(player, command);
