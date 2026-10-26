@@ -26,7 +26,7 @@ jobs:
       - name: Set up MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Build 32-bit Release client
+      - name: Build 32-bit Release client with installed toolset
         shell: pwsh
         run: |
-          msbuild client-source/client.sln /m /t:Build /p:Configuration=Release /p:Platform=Win32 /p:RestorePackagesConfig=true /verbosity:minimal
+          msbuild client-source/client.sln /m /t:Build /p:Configuration=Release /p:Platform=Win32 /p:PlatformToolset=v143 /p:RestorePackagesConfig=true /verbosity:minimal
