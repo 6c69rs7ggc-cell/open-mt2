@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0909">
+  <meta name="description" content="ASHEN REALM webový klient — technická pre-alfa verzia.">
+  <title>Webový klient — ASHEN REALM</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b0909;--panel:#171110;--paper:#eee5d5;--muted:#a59a8c;--red:#a7352d;--gold:#c5a36a;--line:#49312b}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 0%,#60231d55,transparent 45%),var(--bg);color:var(--paper);font:15px system-ui,-apple-system,sans-serif;display:grid;place-items:center;padding:22px}
+    main{width:min(100%,720px)}a{color:var(--gold)}.brand{font:700 13px Georgia,serif;letter-spacing:.22em;color:#d4c4b0;text-decoration:none}.brand span{color:var(--red)}header{display:flex;justify-content:space-between;align-items:center;margin-bottom:34px}.back{font-size:12px;text-decoration:none}
+    .panel{border:1px solid var(--line);background:linear-gradient(145deg,#1b1311f2,#100d0cfa);padding:clamp(24px,5vw,48px);box-shadow:0 24px 90px #0008}
+    .kicker{color:var(--gold);font-size:10px;font-weight:800;letter-spacing:.25em;text-transform:uppercase}h1{font:500 clamp(35px,7vw,58px)/1.02 Georgia,serif;margin:14px 0}p{color:var(--muted);line-height:1.8}.status{display:flex;gap:12px;align-items:flex-start;border:1px solid #8b673b77;background:#c5a36a0a;padding:15px;margin:25px 0}.dot{width:9px;height:9px;flex:none;margin-top:5px;border-radius:50%;background:var(--gold);box-shadow:0 0 15px #c5a36a55}.status strong{display:block;font-size:13px;margin-bottom:5px}.status p{font-size:12px;margin:0}.features{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:28px}.feature{border:1px solid #ffffff13;padding:14px}.feature b{font:16px Georgia,serif;color:#d8c3a3}.feature span{display:block;font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border:1px solid var(--line);font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;text-decoration:none}.btn.primary{background:var(--red);border-color:var(--red);color:#fff}.foot{font-size:11px;text-align:center;margin-top:20px;color:#71645a}
+    @media(max-width:520px){header{align-items:flex-start;gap:18px}.features{grid-template-columns:1fr}.feature{display:flex;align-items:center;gap:15px}.feature span{margin:0}.actions .btn{width:100%}}
+  </style>
+</head>
+<body>
+  <main>
+    <header><a class="brand" href="/">ASHEN<span>/</span>REALM</a><a class="back" href="/">← Späť na hlavnú stránku</a></header>
+    <section class="panel" aria-labelledby="title">
+      <div class="kicker">Browser client / Pre-alfa</div>
+      <h1 id="title">Brána do ríše<br>sa pripravuje.</h1>
+      <p>Toto je základ webového klienta ASHEN REALM. Najprv dokončujeme bezpečné spojenie s herným serverom a kompatibilitu protokolu. Prihlásenie zatiaľ nie je zapnuté, aby stránka nepredstierala funkčnú hru ani nezhromažďovala prihlasovacie údaje.</p>
+      <div class="status" role="status"><span class="dot" aria-hidden="true"></span><div><strong>Herné spojenie ešte nie je dostupné</strong><p>Klient sa zapne až po overení spojenia cez zabezpečenú WebSocket bránu a úspešnom teste prihlásenia.</p></div></div>
+      <div class="features">
+        <div class="feature"><b>01</b><span>Webové rozhranie</span></div>
+        <div class="feature"><b>02</b><span>Bezpečné pripojenie</span></div>
+        <div class="feature"><b>03</b><span>Vstup do hry</span></div>
+      </div>
+      <div class="actions"><a class="btn primary" href="/">Preskúmať ASHEN REALM</a><a class="btn" href="https://github.com/6c69rs7ggc-cell/open-mt2/blob/master/docs/WEB_CLIENT_PLAN.md">Technický plán klienta</a></div>
+    </section>
+    <p class="foot">ASHEN REALM · Webový klient vo vývoji · Nepoužívaj prihlasovacie údaje, kým sa spojenie oficiálne nesprístupní.</p>
+  </main>
+</body>
+</html>
