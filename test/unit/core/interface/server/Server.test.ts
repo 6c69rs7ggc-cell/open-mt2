@@ -268,3 +268,25 @@ describe('Variable-length frame sizes', () => {
         expect(new MyShopPacket().getFrameLength(Buffer.alloc(10))).to.be.equal(null);
     });
 });
+
+describe('Server binding', () => {
+    it('binds to the configured host and an ephemeral numeric port', async () => {
+        const server = new FrameRecorder({
+            logger,
+            config: { SERVER_PORT: '0', SERVER_ADDRESS: '127.0.0.1' } as any,
+            packets: makePackets(),
+        });
+        server.setup();
+
+        try {
+            await server.start();
+            const address = (server as any).server.address();
+
+            expect(address).to.have.property('address', '127.0.0.1');
+            expect(address.port).to.be.a('number').and.greaterThan(0);
+        } finally {
+            await server.close();
+        }
+    });
+});
+
