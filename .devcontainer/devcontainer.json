@@ -1,0 +1,31 @@
+{
+  "name": "Open MT2 development",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": true,
+      "installDockerBuildx": true
+    }
+  },
+  "forwardPorts": [11002, 13001],
+  "portsAttributes": {
+    "11002": {
+      "label": "Metin2 authentication",
+      "onAutoForward": "notify"
+    },
+    "13001": {
+      "label": "Metin2 game server",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "npm ci --ignore-scripts",
+  "remoteUser": "node",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  }
+}
