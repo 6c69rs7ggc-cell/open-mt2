@@ -219,7 +219,7 @@ export default abstract class Server {
 
     start(): Promise<void> {
         return new Promise((resolve) => {
-            this.server.listen(this.config.SERVER_PORT, Number(this.config.SERVER_ADDRESS), () => {
+            this.server.listen(Number(this.config.SERVER_PORT), this.config.SERVER_ADDRESS, () => {
                 this.logger.info(`Server running on: ${this.config.SERVER_ADDRESS}:${this.config.SERVER_PORT} 🔥 `);
                 resolve();
             });
