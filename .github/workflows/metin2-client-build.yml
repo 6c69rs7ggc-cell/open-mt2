@@ -26,29 +26,26 @@ jobs:
       - name: Set up MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Apply temporary compatibility fixes for modern MSVC
+      - name: Apply isolated compatibility fixes to checkout
         shell: pwsh
         run: |
-          $header = "client-source/source/eterLib/GrpDetector.h"
-          if (Test-Path $header) {
-            $source = Get-Content $header -Raw
-            if ($source -notmatch '#include\s*[<"]string[>"]') {
-              $source = $source -replace '(?m)^(#pragma once\s*)', ('$1' + "`r`n#include <string>")
-              Set-Content -Path $header -Value $source -NoNewline
-            }
-          } else {
-            throw "Expected legacy client header not found: $header"
+          $header = "client-source/source/EterLib/GrpDetector.h"
+          $source = Get-Content $header -Raw
+          if ($source -notmatch '#include\s*[<"]string[>"]') {
+            $source = '#include <string>' + "`r`n" + $source
+            Set-Content -Path $header -Value $source -NoNewline
           }
 
-          $miles = "client-source/vs_files/MilesLib/MilesLib.vcxproj"
-          [xml]$project = Get-Content $miles -Raw
-          $nodes = $project.SelectNodes("//*[local-name()='PreprocessorDefinitions']")
-          foreach ($node in $nodes) {
-            if ($node.InnerText -notmatch 'WINDOWS_IGNORE_PACKING_MISMATCH') {
-              $node.InnerText = "WINDOWS_IGNORE_PACKING_MISMATCH;" + $node.InnerText
-            }
-          }
-          $project.Save((Resolve-Path $miles))
+          $jpeg = "client-source/source/EterLib/JpegFile.cpp"
+          $source = Get-Content $jpeg -Raw
+          $marker = 'void mem_init_source (j_decompress_ptr cinfo)'
+          $index = $source.IndexOf($marker)
+          if ($index -lt 0) { throw "Expected JPEG memory source functions not found" }
+          $prefix = $source.Substring(0, $index)
+          $tail = $source.Substring($index)
+          $tail = [regex]::Replace($tail, '\bdata\b', 'jpegInputData')
+          $tail = [regex]::Replace($tail, '\bsize\b', 'jpegInputSize')
+          Set-Content -Path $jpeg -Value ($prefix + $tail) -NoNewline
 
       - name: Build 32-bit Release client with installed toolset
         shell: pwsh
