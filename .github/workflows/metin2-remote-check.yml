@@ -3,13 +3,6 @@ name: Metin2 server remote check
 on:
   push:
     branches: [master]
-    paths:
-      - ".github/workflows/metin2-remote-check.yml"
-      - "src/**"
-      - "test/**"
-      - "package.json"
-      - "package-lock.json"
-      - "tsconfig*.json"
   workflow_dispatch:
 
 permissions:
