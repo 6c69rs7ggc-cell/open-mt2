@@ -47,7 +47,7 @@ jobs:
         run: |
           cp .env.example .env
           sed -i 's/^DB_ROOT_PASSWORD=.*/DB_ROOT_PASSWORD=ci-only-password/' .env
-          sed -i 's/^SEED_ADMIN_PASSWORD=.*/SEED_ADMIN_PASSWORD=ci-only-admin-password/' .env
+          sed -i 's/^SEED_ADMIN_PASSWORD=.*/SEED_ADMIN_PASSWORD=admin/' .env
           printf '\nREAL_SERVER_ADDRESS=127.0.0.1\nCACHE_PING_INTERVAL=30000\n' >> .env
 
       - name: Start MySQL and Redis dependencies
@@ -83,6 +83,9 @@ jobs:
         run: |
           docker exec database mysql -uroot -pci-only-password -N -e "SELECT COUNT(*) FROM auth.account WHERE username IN ('admin','admin1');"
           docker exec database mysql -uroot -pci-only-password -N -e "SHOW TABLES FROM game;"
+
+      - name: Integration tests (real auth socket and database)
+        run: npm run test:integration
 
       - name: Smoke test auth and game servers
         run: |
