@@ -4,7 +4,7 @@ import Logger from '@/core/infra/logger/Logger';
 import Command from '@/game/domain/command/Command';
 import { CommandMapValue } from '@/game/domain/command/Commands';
 
-const PUBLIC_COMMANDS = new Set(['/help', '/logout']);
+const PUBLIC_COMMANDS = new Set(['/help', '/logout', '/accountid']);
 
 export default class CommandManager {
     private readonly logger: Logger;
