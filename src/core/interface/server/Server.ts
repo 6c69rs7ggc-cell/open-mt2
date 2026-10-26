@@ -218,11 +218,21 @@ export default abstract class Server {
     }
 
     start(): Promise<void> {
-        return new Promise((resolve) => {
-            this.server.listen(Number(this.config.SERVER_PORT), this.config.SERVER_ADDRESS, () => {
+        return new Promise((resolve, reject) => {
+            const onError = (error: Error) => {
+                this.server.off('listening', onListening);
+                reject(error);
+            };
+            const onListening = () => {
+                this.server.off('error', onError);
                 this.logger.info(`Server running on: ${this.config.SERVER_ADDRESS}:${this.config.SERVER_PORT} 🔥 `);
                 resolve();
-            });
+            };
+
+            // Do not leave startup pending forever when the address/port cannot be bound.
+            this.server.once('error', onError);
+            this.server.once('listening', onListening);
+            this.server.listen(Number(this.config.SERVER_PORT), this.config.SERVER_ADDRESS);
         });
     }
 
