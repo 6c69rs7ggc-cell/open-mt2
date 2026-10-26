@@ -30,22 +30,24 @@ jobs:
         shell: pwsh
         run: |
           $header = "client-source/source/EterLib/GrpDetector.h"
-          $source = Get-Content $header -Raw
-          if ($source -notmatch '#include\s*[<"]string[>"]') {
-            $source = '#include <string>' + "`r`n" + $source
-            Set-Content -Path $header -Value $source -NoNewline
+          $headerSource = Get-Content $header -Raw
+          if ($headerSource -notmatch '#include\s*[<"]string[>"]') {
+            $headerSource = '#include <string>' + "`r`n" + $headerSource
+            Set-Content -Path $header -Value $headerSource -NoNewline
           }
 
           $jpeg = "client-source/source/EterLib/JpegFile.cpp"
-          $source = Get-Content $jpeg -Raw
-          $marker = 'void mem_init_source (j_decompress_ptr cinfo)'
-          $index = $source.IndexOf($marker)
-          if ($index -lt 0) { throw "Expected JPEG memory source functions not found" }
-          $prefix = $source.Substring(0, $index)
-          $tail = $source.Substring($index)
-          $tail = [regex]::Replace($tail, '\bdata\b', 'jpegInputData')
-          $tail = [regex]::Replace($tail, '\bsize\b', 'jpegInputSize')
-          Set-Content -Path $jpeg -Value ($prefix + $tail) -NoNewline
+          $jpegSource = Get-Content $jpeg -Raw
+          $jpegSource = [regex]::Replace($jpegSource, '\bdata\b', 'jpegInputData')
+          $jpegSource = [regex]::Replace($jpegSource, '\bsize\b', 'jpegInputSize')
+          Set-Content -Path $jpeg -Value $jpegSource -NoNewline
+
+          $miles = "client-source/vs_files/MilesLib/MilesLib.vcxproj"
+          $projectSource = Get-Content $miles -Raw
+          if ($projectSource -notmatch 'WINDOWS_IGNORE_PACKING_MISMATCH') {
+            $projectSource = [regex]::Replace($projectSource, '<PreprocessorDefinitions>', '<PreprocessorDefinitions>WINDOWS_IGNORE_PACKING_MISMATCH;')
+            Set-Content -Path $miles -Value $projectSource -NoNewline
+          }
 
       - name: Build 32-bit Release client with installed toolset
         shell: pwsh
