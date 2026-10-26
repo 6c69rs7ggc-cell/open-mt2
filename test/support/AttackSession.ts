@@ -189,6 +189,16 @@ export default class AttackHarness {
                 ['1234567', `${username}@test.com`, hash, 1, username],
             );
         const accountId = res.insertId;
+        // Integration tests seed temporary accounts and must be able to exercise
+        // privileged commands. This allowlist exists only in the disposable test process.
+        const gmIds = new Set(
+            (process.env.GM_ACCOUNT_IDS || '')
+                .split(',')
+                .map((value) => Number(value.trim()))
+                .filter((value) => Number.isSafeInteger(value) && value > 0),
+        );
+        gmIds.add(Number(accountId));
+        process.env.GM_ACCOUNT_IDS = [...gmIds].join(',');
         await this.db.getConnection().query('DELETE FROM game.player WHERE name = ?', [username]);
         await this.db.getConnection().query(
             `INSERT INTO game.player (accountId, empire, playerClass, skillGroup, playTime, level, experience,
