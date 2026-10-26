@@ -19,7 +19,9 @@ export default class CommandManager {
 
     async execute({ message, player }: { message: string; player: Player }) {
         //TODO: validate ban words
-        if (message.startsWith('/help')) {
+        const [commandName, ...args] = message.trim().split(/\s+/);
+
+        if (commandName === '/help') {
             for (const { command } of this.commands.values()) {
                 const example = command.getExample() ? `- Example: ${command.getExample()}` : '';
                 player.chat({
@@ -30,7 +32,6 @@ export default class CommandManager {
             return;
         }
 
-        const [commandName, ...args] = message.split(' ');
         const commandBuilder = this.commands.get(commandName);
 
         if (!commandBuilder) {
