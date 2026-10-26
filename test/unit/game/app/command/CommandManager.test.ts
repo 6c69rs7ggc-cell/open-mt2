@@ -10,13 +10,17 @@ describe('CommandManager', () => {
     let containerStub;
     let commandStub;
     let commandHandlerStub;
+    let previousGmAccountIds: string | undefined;
 
     beforeEach(() => {
+        previousGmAccountIds = process.env.GM_ACCOUNT_IDS;
+        process.env.GM_ACCOUNT_IDS = '42';
         loggerStub = {
             info: sinon.stub(),
         };
         playerStub = {
             chat: sinon.stub(),
+            getAccountId: sinon.stub().returns(42),
         };
         commandStub = class {
             static getName = sinon.stub().returns('testCommand');
@@ -34,7 +38,11 @@ describe('CommandManager', () => {
         commandManager = new CommandManager(containerStub);
     });
 
-    afterEach(() => sinon.restore());
+    afterEach(() => {
+        sinon.restore();
+        if (previousGmAccountIds === undefined) delete process.env.GM_ACCOUNT_IDS;
+        else process.env.GM_ACCOUNT_IDS = previousGmAccountIds;
+    });
 
     it('should list all commands when /help is used', async () => {
         await commandManager.execute({ message: '/help', player: playerStub });
@@ -62,7 +70,19 @@ describe('CommandManager', () => {
         ).to.be.true;
     });
 
-    it('should execute valid command', async () => {
+    it('should deny privileged commands to accounts not listed as GMs', async () => {
+        playerStub.getAccountId.returns(999);
+
+        await commandManager.execute({ message: '/test arg1', player: playerStub });
+
+        expect(commandHandlerStub.execute.called).to.be.false;
+        expect(playerStub.chat.calledWith({
+            message: '[SYSTEM] You do not have permission to use this command.',
+            messageType: ChatMessageTypeEnum.INFO,
+        })).to.be.true;
+    });
+
+    it('should execute valid command for a configured GM account', async () => {
         await commandManager.execute({ message: '/test arg1 arg2', player: playerStub });
 
         expect(commandHandlerStub.execute.calledOnce).to.be.true;
