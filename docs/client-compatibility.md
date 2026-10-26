@@ -10,7 +10,7 @@ The repository's feature roadmap still marks protocol encryption as TODO. A clie
 
 1. Use a legally obtained TMP4 / 40k client whose packet headers and structures match this emulator.
 2. Configure that client's `serverinfo.py` with the reachable server address and the actual auth/game ports. `127.0.0.1` and `localhost` only refer to the same device as the client; they are not valid for a client on another device.
-3. For remote clients, configure the server's public/reachable address in the game configuration used for character-list handoff as well as in the client. Check the actual `REAL_SERVER_ADDRESS` / server address setting in the current `.env.example` and game config before exposing the service.
+3. For remote clients, set `REAL_SERVER_ADDRESS` to the server's reachable public IPv4 address. The character-list handoff encodes this value as a 32-bit IPv4 integer, so a DNS name is not supported there by the current `Ip.toInt` implementation. Also configure the client's `serverinfo.py` with the same reachable address and the correct auth/game ports.
 4. Confirm that TCP connections reach auth (default port 11002) and game (default port 13001), and inspect debug logs for the last handshake and packet received.
 5. Verify the complete path in order: handshake, login, character list, create/select character, enter game, movement, chat, disconnect and reconnect.
 6. Test with a non-default account password. Never expose the example `admin/admin` credentials on a public server; replace the seed password before creating a real deployment.
