@@ -44,9 +44,9 @@ jobs:
           if (-not $lib -or -not (Test-Path $lib)) {
             throw "Crypto++ static library was not produced; expected cryptlib.lib under Win32 Release output."
           }
-          New-Item -ItemType Directory -Force -Path "client-source/extern/library/Visual_Studio" | Out-Null
-          Copy-Item $lib "client-source/extern/library/Visual_Studio/Cryptopp_lib_release.lib" -Force
-          if (-not (Test-Path "client-source/extern/library/Visual_Studio/Cryptopp_lib_release.lib")) {
+          New-Item -ItemType Directory -Force -Path "client-source/extern/library" | Out-Null
+          Copy-Item $lib "client-source/extern/library/Cryptopp_lib_release.lib" -Force
+          if (-not (Test-Path "client-source/extern/library/Cryptopp_lib_release.lib")) {
             throw "Crypto++ library was not copied to the linker search directory."
           }
 
