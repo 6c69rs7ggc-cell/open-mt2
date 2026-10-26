@@ -88,7 +88,7 @@ Metin2 are copyrighted by [Webzen](http://webzen.com/ "Webzen").
 
 In this implementation we are using custom commands, described bellow:
 
-**(for now, any player can execute any command)**
+**Permissions:** `/help` and `/logout` are public. All other commands require the account ID to be listed in `GM_ACCOUNT_IDS` in the server's `.env` file. Leave `GM_ACCOUNT_IDS` empty to disable privileged commands. Use database account IDs, not character names, and never commit `.env` or publish credentials.
 
 - **/help**
     - Description: This command shows all the commands and the description of each command as well as an example.
