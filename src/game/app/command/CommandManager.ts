@@ -19,7 +19,7 @@ export default class CommandManager {
 
     async execute({ message, player }: { message: string; player: Player }) {
         // TODO: validate banned words.
-        const [commandName, ...args] = message.trim().split(/\\s+/);
+        const [commandName, ...args] = message.trim().split(/\s+/);
 
         // Resolve GM access from the authenticated account ID only. Never trust a
         // character name or a client-supplied GM flag.
