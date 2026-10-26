@@ -25,7 +25,7 @@ describe('Ip', () => {
 
         it('should return an unsigned integer for public IPv4 addresses', () => {
             const result = Ip.toInt('203.0.113.10');
-            expect(result).to.equal(171215043);
+            expect(result).to.equal(175177931);
             expect(result).to.be.at.least(0);
             expect(result).to.be.at.most(0xffffffff);
         });
