@@ -48,6 +48,7 @@ jobs:
           cp .env.example .env
           sed -i 's/^DB_ROOT_PASSWORD=.*/DB_ROOT_PASSWORD=ci-only-password/' .env
           sed -i 's/^SEED_ADMIN_PASSWORD=.*/SEED_ADMIN_PASSWORD=ci-only-admin-password/' .env
+          printf '\nREAL_SERVER_ADDRESS=127.0.0.1\nCACHE_PING_INTERVAL=30000\n' >> .env
 
       - name: Start MySQL and Redis dependencies
         run: |
@@ -74,6 +75,51 @@ jobs:
             fi
             sleep 2
           done
+
+      - name: Run database migrations
+        run: npm run migrate
+
+      - name: Verify seeded database schema
+        run: |
+          docker exec database mysql -uroot -pci-only-password -N -e "SELECT COUNT(*) FROM auth.account WHERE username IN ('admin','admin1');"
+          docker exec database mysql -uroot -pci-only-password -N -e "SHOW TABLES FROM game;"
+
+      - name: Smoke test auth and game servers
+        run: |
+          npm run auth > /tmp/open-mt2-auth.log 2>&1 &
+          AUTH_PID=$!
+          npm run game > /tmp/open-mt2-game.log 2>&1 &
+          GAME_PID=$!
+          cleanup() {
+            kill "$AUTH_PID" "$GAME_PID" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          for port in 11002 13001; do
+            ready=0
+            for i in $(seq 1 30); do
+              if bash -c "echo > /dev/tcp/127.0.0.1/$port" 2>/dev/null; then
+                echo "Server listening on $port"
+                ready=1
+                break
+              fi
+              if ! kill -0 "$AUTH_PID" 2>/dev/null && [ "$port" -eq 11002 ]; then
+                cat /tmp/open-mt2-auth.log
+                exit 1
+              fi
+              if ! kill -0 "$GAME_PID" 2>/dev/null && [ "$port" -eq 13001 ]; then
+                cat /tmp/open-mt2-game.log
+                exit 1
+              fi
+              sleep 2
+            done
+            if [ "$ready" -ne 1 ]; then
+              cat /tmp/open-mt2-auth.log
+              cat /tmp/open-mt2-game.log
+              exit 1
+            fi
+          done
+          cat /tmp/open-mt2-auth.log
+          cat /tmp/open-mt2-game.log
 
       - name: Print dependency status
         if: always()
