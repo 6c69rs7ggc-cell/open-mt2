@@ -288,5 +288,27 @@ describe('Server binding', () => {
             await server.close();
         }
     });
+
+    it('rejects startup when the configured host cannot be bound', async () => {
+        const server = new FrameRecorder({
+            logger,
+            config: { SERVER_PORT: '0', SERVER_ADDRESS: '256.256.256.256' } as any,
+            packets: makePackets(),
+        });
+        server.setup();
+
+        try {
+            let startupError: Error | undefined;
+            try {
+                await server.start();
+            } catch (error) {
+                startupError = error as Error;
+            }
+
+            expect(startupError).to.be.instanceOf(Error);
+        } finally {
+            await server.close();
+        }
+    });
 });
 
