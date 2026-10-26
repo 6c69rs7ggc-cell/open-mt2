@@ -35,6 +35,8 @@ import ItemCommand from './command/item/ItemCommand';
 import ItemCommandHandler from './command/item/ItemCommandHandler';
 import ListCommand from './command/list/ListCommand';
 import ListCommandHandler from './command/list/ListCommandHandler';
+import AccountIdCommand from './command/accountId/AccountIdCommand';
+import AccountIdCommandHandler from './command/accountId/AccountIdCommandHandler';
 import LogoutCommand from './command/logout/LogoutCommand';
 import LogoutCommandHandler from './command/logout/LogoutCommandHandler';
 import LevelCommand from './command/lvl/LevelCommand';
@@ -82,6 +84,13 @@ export default function createCommands() {
             {
                 command: StatCommand,
                 createHandler: (params) => new StatCommandHandler(params),
+            },
+        ],
+        [
+            AccountIdCommand.getName(),
+            {
+                command: AccountIdCommand,
+                createHandler: () => new AccountIdCommandHandler(),
             },
         ],
         [
