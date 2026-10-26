@@ -27,5 +27,17 @@ describe('Ip', () => {
             const result = Ip.toInt('1.1.1.1');
             expect(result).to.equal(16843009);
         });
+
+        it('should reject DNS names because the character-list packet requires IPv4', () => {
+            expect(() => Ip.toInt('game.example.com')).to.throw('Invalid IPv4 address');
+        });
+
+        it('should reject IPv4 octets above 255', () => {
+            expect(() => Ip.toInt('192.168.1.256')).to.throw('Invalid IPv4 address');
+        });
+
+        it('should reject incomplete IPv4 addresses', () => {
+            expect(() => Ip.toInt('192.168.1')).to.throw('Invalid IPv4 address');
+        });
     });
 });
