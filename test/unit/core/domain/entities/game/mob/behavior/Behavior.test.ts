@@ -4,7 +4,7 @@ import Behavior from '@/core/domain/entities/game/mob/behavior/Behavior';
 import MapAttributeGrid from '@/core/util/MapAttributeGrid';
 import { MapAttributeFlagEnum } from '@/core/enum/MapAttributeFlagEnum';
 import { EntityStateEnum } from '@/core/enum/EntityStateEnum';
-import MathUtil from '@/core/util/MathUtil';
+import MathUtil from '@/core/domain/util/MathUtil';
 
 const CELL_SIZE = 100;
 
