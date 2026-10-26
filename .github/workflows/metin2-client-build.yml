@@ -27,13 +27,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: weidai11/cryptopp
-          ref: CRYPTOPP_8_9_0
+          ref: CRYPTOPP_5_6_5
           path: cryptopp-source
 
       - name: Set up MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Build Crypto++ static library required by client
+      - name: Build Crypto++ 5.6.5 static library matching bundled headers
         shell: pwsh
         run: |
           msbuild cryptopp-source/cryptlib.vcxproj /m /t:Build /p:Configuration=Release /p:Platform=Win32 /p:PlatformToolset=v143 /verbosity:minimal
@@ -42,7 +42,7 @@ jobs:
             $lib = Get-ChildItem "cryptopp-source" -Recurse -Filter cryptlib.lib | Where-Object { $_.FullName -match "Win32.*Release" } | Select-Object -First 1 -ExpandProperty FullName
           }
           if (-not $lib -or -not (Test-Path $lib)) {
-            throw "Crypto++ static library was not produced; expected cryptlib.lib under Win32 Release output."
+            throw "Crypto++ 5.6.5 static library was not produced; expected cryptlib.lib under Win32 Release output."
           }
           New-Item -ItemType Directory -Force -Path "client-source/extern/library" | Out-Null
           Copy-Item $lib "client-source/extern/library/Cryptopp_lib_release.lib" -Force
