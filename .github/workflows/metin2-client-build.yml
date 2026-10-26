@@ -1,0 +1,32 @@
+name: Metin2 Client Build Check
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/metin2-client-build.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-client:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout ASHEN REALM repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Metin2 client source
+        uses: actions/checkout@v4
+        with:
+          repository: NakiuS/Metin2Client
+          ref: master
+          path: client-source
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build 32-bit Release client
+        shell: pwsh
+        run: |
+          msbuild client-source/client.sln /m /t:Build /p:Configuration=Release /p:Platform=Win32 /p:RestorePackagesConfig=true /verbosity:minimal
