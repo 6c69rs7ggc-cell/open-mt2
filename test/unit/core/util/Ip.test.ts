@@ -18,9 +18,16 @@ describe('Ip', () => {
             expect(result).to.equal(16820416);
         });
 
-        it('should convert IP address "255.255.255.255" to integer -1', () => {
+        it('should convert IP address "255.255.255.255" to unsigned integer 4294967295', () => {
             const result = Ip.toInt('255.255.255.255');
-            expect(result).to.equal(-1);
+            expect(result).to.equal(4294967295);
+        });
+
+        it('should return an unsigned integer for public IPv4 addresses', () => {
+            const result = Ip.toInt('203.0.113.10');
+            expect(result).to.equal(171215043);
+            expect(result).to.be.at.least(0);
+            expect(result).to.be.at.most(0xffffffff);
         });
 
         it('should handle single-digit IP parts correctly', () => {
