@@ -56,6 +56,15 @@ describe('CommandManager', () => {
         ).to.be.true;
     });
 
+    it('should not treat command names beginning with /help as /help', async () => {
+        await commandManager.execute({ message: '/helpful', player: playerStub });
+
+        expect(loggerStub.info.calledOnce).to.be.true;
+        expect(loggerStub.info.calledWith('[CommandManager] Invalid command: /helpful')).to.be.true;
+        expect(playerStub.chat.calledOnce).to.be.true;
+        expect(commandHandlerStub.execute.called).to.be.false;
+    });
+
     it('should handle invalid command', async () => {
         await commandManager.execute({ message: '/invalid', player: playerStub });
 
