@@ -23,8 +23,28 @@ jobs:
           ref: master
           path: client-source
 
+      - name: Checkout Crypto++ source for missing static library
+        uses: actions/checkout@v4
+        with:
+          repository: weidai11/cryptopp
+          ref: CRYPTOPP_8_9_0
+          path: cryptopp-source
+
       - name: Set up MSBuild
         uses: microsoft/setup-msbuild@v2
+
+      - name: Build Crypto++ static library required by client
+        shell: pwsh
+        run: |
+          msbuild cryptopp-source/cryptlib.vcxproj /m /t:Build /p:Configuration=Release /p:Platform=Win32 /p:PlatformToolset=v143 /verbosity:minimal
+          $lib = "cryptopp-source/Win32/Output/Release/cryptlib.lib"
+          if (-not (Test-Path $lib)) {
+            $lib = Get-ChildItem "cryptopp-source" -Recurse -Filter cryptlib.lib | Where-Object { $_.FullName -match "Win32.*Release" } | Select-Object -First 1 -ExpandProperty FullName
+          }
+          if (-not $lib -or -not (Test-Path $lib)) {
+            throw "Crypto++ static library was not produced; expected cryptlib.lib under Win32 Release output."
+          }
+          Copy-Item $lib "client-source/extern/lib/Cryptopp_lib_release.lib" -Force
 
       - name: Apply isolated compatibility fixes to checkout
         shell: pwsh
