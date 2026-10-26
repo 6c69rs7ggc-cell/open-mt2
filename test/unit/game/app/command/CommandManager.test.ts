@@ -32,7 +32,10 @@ describe('CommandManager', () => {
         };
         containerStub = {
             logger: loggerStub,
-            commands: new Map([['/test', { command: commandStub, createHandler: () => commandHandlerStub }]]),
+            commands: new Map([
+                ['/test', { command: commandStub, createHandler: () => commandHandlerStub }],
+                ['/accountid', { command: commandStub, createHandler: () => commandHandlerStub }],
+            ]),
         };
 
         commandManager = new CommandManager(containerStub);
@@ -89,6 +92,15 @@ describe('CommandManager', () => {
             message: '[SYSTEM] You do not have permission to use this command.',
             messageType: ChatMessageTypeEnum.INFO,
         })).to.be.true;
+    });
+
+    it('should allow /accountid for a non-GM account', async () => {
+        playerStub.getAccountId.returns(999);
+
+        await commandManager.execute({ message: '/accountid', player: playerStub });
+
+        expect(commandHandlerStub.execute.calledOnce).to.be.true;
+        expect(playerStub.chat.called).to.be.false;
     });
 
     it('should execute valid command for a configured GM account', async () => {
