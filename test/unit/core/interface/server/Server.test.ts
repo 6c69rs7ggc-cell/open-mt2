@@ -113,6 +113,22 @@ describe('Server packet framing', () => {
         expect(socket.destroy.called).to.be.equal(false);
     });
 
+    it('should skip a fragmented SYNC_POSITION packet before processing the next client packet', async () => {
+        // SYNC_POSITION is not implemented, but its client frame length is
+        // encoded in the 16-bit size field and includes a trailing sequence byte.
+        const syncPosition = Buffer.from([0x08, 0x07, 0x00, 0x11, 0x22, 0x33, 0x44, 0x00]);
+        socket.emit('data', syncPosition.subarray(0, 2));
+        await settle();
+        expect(server.frames).to.have.lengthOf(0);
+
+        socket.emit('data', Buffer.concat([syncPosition.subarray(2), attackPacket()]));
+        await settle();
+
+        expect(server.frames).to.have.lengthOf(1);
+        expect(server.frames[0]).to.deep.equal(attackPacket());
+        expect(socket.destroy.called).to.be.equal(false);
+    });
+
     it('should discard the buffer on an unknown header without closing the connection', async () => {
         socket.emit('data', Buffer.concat([attackPacket(), Buffer.from([0xee]), chatPacket('lost')]));
         await settle();
