@@ -85,7 +85,7 @@ jobs:
           $jpegCompat = "client-source/source/EterLib/JpegFile.cpp"
           $jpegCompatSource = Get-Content $jpegCompat -Raw
           if ($jpegCompatSource -notmatch '__iob_func') {
-            $jpegCompatSource += "`r`n#include <stdio.h>`r`nextern \"C\" FILE __iob_func[3] = { *stdin, *stdout, *stderr };`r`n"
+            $jpegCompatSource += "`r`n#include <stdio.h>`r`n" + 'extern "C" FILE __iob_func[3] = { *stdin, *stdout, *stderr };' + "`r`n"
             Set-Content -Path $jpegCompat -Value $jpegCompatSource -NoNewline
           }
 
