@@ -47,3 +47,16 @@ Official reference: https://dev.epicgames.com/documentation/unreal-engine/packag
 - Even if files can be extracted, their reuse in ASHEN REALM must be checked separately for permission and for format compatibility; UE assets are not directly interchangeable with the classic Metin2 client.
 
 This narrows the blocker to two distinct questions: whether a matching authorized key/toolchain can be obtained, and whether the payload itself uses additional encryption.
+
+## Proto ID comparison utility
+
+Added `tools/compareMobile2Proto.js` to compare IDs from an authorized, already-exported TSV table against the current server JSON tables. It does not access PAK files, decrypt content, or import data.
+
+Examples (run from the repository root):
+
+```sh
+node tools/compareMobile2Proto.js --kind items --source /path/to/item_proto.txt
+node tools/compareMobile2Proto.js --kind mobs --source /path/to/mob_proto.txt
+```
+
+The input must be a tab-separated text file with a header row and an ID column such as `vnum`, `id`, or `race`. The report shows ID overlap, source-only/server-only IDs, duplicate IDs, and rows missing IDs. It deliberately does not automatically overwrite server data: matching IDs alone do not establish that field meanings, balancing, or asset rights are compatible.
