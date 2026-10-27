@@ -27,13 +27,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: weidai11/cryptopp
-          ref: CRYPTOPP_5_6_5
+          ref: CRYPTOPP_5_6_2
           path: cryptopp-source
 
       - name: Set up MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Build Crypto++ 5.6.5 static library
+      - name: Build Crypto++ 5.6.2 static library
         shell: pwsh
         run: |
           msbuild cryptopp-source/cryptlib.vcxproj /m /t:Build /p:Configuration=Release /p:Platform=Win32 /p:PlatformToolset=v143 /verbosity:minimal
@@ -42,7 +42,7 @@ jobs:
             $lib = Get-ChildItem "cryptopp-source" -Recurse -Filter cryptlib.lib | Where-Object { $_.FullName -match "Win32.*Release" } | Select-Object -First 1 -ExpandProperty FullName
           }
           if (-not $lib -or -not (Test-Path $lib)) {
-            throw "Crypto++ 5.6.5 static library was not produced; expected cryptlib.lib under Win32 Release output."
+            throw "Crypto++ 5.6.2 static library was not produced; expected cryptlib.lib under Win32 Release output."
           }
           New-Item -ItemType Directory -Force -Path "client-source/extern/library" | Out-Null
           Copy-Item $lib "client-source/extern/library/Cryptopp_lib_release.lib" -Force
@@ -102,6 +102,10 @@ jobs:
           if ($releaseGroup -notmatch $linkPattern) { throw "Could not find Link section in Release|Win32 item definition group." }
           $linkReplacement = '<Link>' + "`r`n      <AdditionalDependencies>" + '$(SolutionDir)vs_files\SphereLib\Release\SphereLib.lib;$(SolutionDir)extern\library\Cryptopp_lib_release.lib;%(AdditionalDependencies)</AdditionalDependencies>' + '$1</Link>'
           $releaseGroup = [regex]::Replace($releaseGroup, $linkPattern, $linkReplacement, 1)
+          if ($releaseGroup -notmatch [regex]::Escape('$(SolutionDir)vs_files\SphereLib\Release\SphereLib.lib') -or $releaseGroup -notmatch [regex]::Escape('$(SolutionDir)extern\library\Cryptopp_lib_release.lib')) {
+            throw "Explicit SphereLib/Crypto++ dependencies were not inserted into the Release linker settings."
+          }
+          Write-Host "Release linker will use SphereLib.lib and Crypto++ 5.6.2, matching the bundled Crypto++ headers."
           $uiSource = $uiSource.Substring(0, $releaseGroupMatch.Index) + $releaseGroup + $uiSource.Substring($releaseGroupMatch.Index + $releaseGroupMatch.Length)
           Set-Content -Path $uiProject -Value $uiSource -NoNewline
 
