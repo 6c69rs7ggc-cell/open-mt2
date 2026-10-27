@@ -1,3 +1,4 @@
+/* eslint @typescript-eslint/no-require-imports: "off", no-undef: "off" */
 'use strict';
 
 // Compare an authorized/exported Mobile2 TSV proto table with ASHEN REALM's
