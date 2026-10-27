@@ -152,15 +152,27 @@ jobs:
         run: |
           $exe = "client-source/binary/Metin2Release.exe"
           if (-not (Test-Path $exe)) { throw "Build succeeded but Metin2Release.exe is missing." }
+
+          # A runnable Metin2 client is a complete client folder, not a standalone EXE.
+          # Never publish an incomplete ZIP that fails immediately on missing Granny2.
+          $granny = Get-ChildItem "client-source" -Recurse -File -Filter "granny2.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $granny) {
+            throw "Cannot publish client ZIP: granny2.dll is not present in the checked-out client source. Add a legally obtained, matching client runtime folder (including granny2.dll and required game data) before building a release."
+          }
+
           $package = "release-package"
           New-Item -ItemType Directory -Force -Path $package | Out-Null
           Copy-Item $exe "$package/Metin2Release.exe" -Force
+          # Include runtime DLLs found alongside the built client. Do not copy source trees or libraries.
+          $runtimeDir = Split-Path $granny.FullName -Parent
+          Get-ChildItem $runtimeDir -File | Where-Object { $_.Extension -in @(".dll", ".pyd") } | Copy-Item -Destination $package -Force
+          if (-not (Test-Path "$package/granny2.dll")) { throw "Packaging failed: granny2.dll was not copied next to Metin2Release.exe." }
+
           @'
           ASHEN REALM — Testovací Windows klient
 
           Spustenie: Metin2Release.exe
-          Toto je testovacia zostava. Kompatibilita prihlásenia a pripojenie na herný server zatiaľ nie sú potvrdené.
-          Používajte iba na vlastné riziko a s vedomím, že ide o vývojovú verziu.
+          Tento ZIP obsahuje spustiteľný súbor a dostupné runtime DLL. Úplné herné dáta a kompatibilita prihlásenia/servera musia byť dodané a otestované osobitne.
           '@ | Set-Content -Path "$package/README.txt" -Encoding UTF8
           Compress-Archive -Path "$package/*" -DestinationPath "ASHEN-REALM-Client.zip" -Force
           if (-not (Test-Path "ASHEN-REALM-Client.zip")) { throw "Client ZIP package was not created." }
