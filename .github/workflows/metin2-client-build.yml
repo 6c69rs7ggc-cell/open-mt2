@@ -81,6 +81,14 @@ jobs:
           $resourceSource = $resourceSource.Replace('#include "afxres.h"', "#include <winres.h>`r`n#ifndef IDC_STATIC`r`n#define IDC_STATIC -1`r`n#endif")
           Set-Content -Path $resource -Value $resourceSource -NoNewline
 
+          # SpherePack::LostChild is declared inline in the header but defined out-of-line
+          # in spherepack.cpp; MSVC can omit the external symbol needed by EterLib.
+          $sphereHeader = "client-source/source/SphereLib/spherepack.h"
+          $sphereHeaderSource = Get-Content $sphereHeader -Raw
+          $sphereHeaderSource = [regex]::Replace($sphereHeaderSource, '(?m)^([ \t]*)inline[ \t]+void[ \t]+LostChild\(SpherePack \*pack\);', '$1void LostChild(SpherePack *pack);')
+          if ($sphereHeaderSource -notmatch '(?m)^\s*void LostChild\(SpherePack \*pack\);') { throw "Could not correct SpherePack::LostChild declaration." }
+          Set-Content -Path $sphereHeader -Value $sphereHeaderSource -NoNewline
+
           # EterLib uses SpherePack symbols but upstream omits the SphereLib project reference.
           $eterProject = "client-source/vs_files/EterLib/EterLib.vcxproj"
           $eterSource = Get-Content $eterProject -Raw
@@ -110,9 +118,9 @@ jobs:
           $releaseGroup = $releaseGroupMatch.Value
           $linkPattern = '(?s)<Link>(.*?)</Link>'
           if ($releaseGroup -notmatch $linkPattern) { throw "Could not find Link section in Release|Win32 item definition group." }
-          $linkReplacement = '<Link>' + "`r`n      <AdditionalDependencies>" + '$(SolutionDir)SphereLib\Release\SphereLib.lib;$(SolutionDir)extern\library\Cryptopp_lib_release.lib;%(AdditionalDependencies)</AdditionalDependencies>' + '$1</Link>'
+          $linkReplacement = '<Link>' + "`r`n      <AdditionalDependencies>" + '$(SolutionDir)vs_files\SphereLib\Release\SphereLib.lib;$(SolutionDir)extern\library\Cryptopp_lib_release.lib;%(AdditionalDependencies)</AdditionalDependencies>' + '$1</Link>'
           $releaseGroup = [regex]::Replace($releaseGroup, $linkPattern, $linkReplacement, 1)
-          if ($releaseGroup -notmatch [regex]::Escape('$(SolutionDir)SphereLib\Release\SphereLib.lib') -or $releaseGroup -notmatch [regex]::Escape('$(SolutionDir)extern\library\Cryptopp_lib_release.lib')) {
+          if ($releaseGroup -notmatch [regex]::Escape('$(SolutionDir)vs_files\SphereLib\Release\SphereLib.lib') -or $releaseGroup -notmatch [regex]::Escape('$(SolutionDir)extern\library\Cryptopp_lib_release.lib')) {
             throw "Explicit SphereLib/Crypto++ dependencies were not inserted into the Release linker settings."
           }
           Write-Host "Release linker will use SphereLib.lib and Crypto++ 5.6.2, matching the bundled Crypto++ headers."
