@@ -100,7 +100,7 @@ jobs:
           $releaseGroup = $releaseGroupMatch.Value
           $linkPattern = '(?s)<Link>(.*?)</Link>'
           if ($releaseGroup -notmatch $linkPattern) { throw "Could not find Link section in Release|Win32 item definition group." }
-          $linkReplacement = '<Link>' + "`r`n      <AdditionalDependencies>$(SolutionDir)vs_files\SphereLib\Release\SphereLib.lib;$(SolutionDir)extern\library\Cryptopp_lib_release.lib;%(AdditionalDependencies)</AdditionalDependencies>" + '$1</Link>'
+          $linkReplacement = '<Link>' + "`r`n      <AdditionalDependencies>" + '$(SolutionDir)vs_files\SphereLib\Release\SphereLib.lib;$(SolutionDir)extern\library\Cryptopp_lib_release.lib;%(AdditionalDependencies)</AdditionalDependencies>' + '$1</Link>'
           $releaseGroup = [regex]::Replace($releaseGroup, $linkPattern, $linkReplacement, 1)
           $uiSource = $uiSource.Substring(0, $releaseGroupMatch.Index) + $releaseGroup + $uiSource.Substring($releaseGroupMatch.Index + $releaseGroupMatch.Length)
           Set-Content -Path $uiProject -Value $uiSource -NoNewline
