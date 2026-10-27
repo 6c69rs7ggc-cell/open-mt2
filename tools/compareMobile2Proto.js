@@ -1,49 +1,150 @@
-# Mobile2 client compatibility assessment
+'use strict';
 
-## Evidence collected
+// Compare an authorized/exported Mobile2 TSV proto table with ASHEN REALM's
+// current JSON table. This does not read or decrypt PAK files.
+const fs = require('node:fs');
+const path = require('node:path');
 
-The supplied Mobile2Global folder contains an Unreal Engine-style layout:
+const ROOT = path.resolve(__dirname, '..');
+const CONFIGS = {
+  items: {
+    serverPath: path.join(ROOT, 'src/core/infra/config/data/items.json'),
+    idCandidates: ['vnum', 'id', 'item_id', 'itemid', 'item_vnum'],
+  },
+  mobs: {
+    serverPath: path.join(ROOT, 'src/core/infra/config/data/mobs.json'),
+    idCandidates: ['vnum', 'id', 'mob_id', 'mobid', 'race', 'race_num'],
+  },
+};
 
-- `Engine/Content/Paks/pakchunk0-WindowsNoEditor.pak` (36,675,915 bytes).
-- Several `pakchunk*-WindowsNoEditor.sig` signature files, but only one corresponding `.pak` file was present in the file listing.
-- CEF3 runtime files and language `.pak` files under `Engine/Binaries/ThirdParty/CEF3/Win64/Resources`; these are Chromium Embedded Framework resources, not evidence of Metin2 world assets.
-- The reported executable `mobilemmo-Win64-Shipping.exe` contains strings referencing Unreal Engine 4.27 and Metin2-style data names such as `item_proto`, `mob_proto`, `skill_proto`, `m2data/warriorData.txt`, and a `.gr2` model name. It also references UE asset paths for Warrior/Warrior2, Sura/Sura2, Ninja/Ninja2 and Shaman/Shaman2 character classes, plus folders for mobs, mounts, sounds, item icons and effects. These are path/name references compiled into the executable, not extracted assets.
+function normalizeKey(value) {
+  return String(value ?? '').trim().toLowerCase().replace(/[\s_-]/g, '');
+}
 
-### PAK inspection
+function getRecords(value) {
+  if (Array.isArray(value)) return value.filter((row) => row && typeof row === 'object');
+  if (value && typeof value === 'object') {
+    return Object.entries(value).map(([key, row]) => {
+      if (row && typeof row === 'object' && !Array.isArray(row)) {
+        return { __mapKey: key, ...row };
+      }
+      return { __mapKey: key, value: row };
+    });
+  }
+  throw new Error('Server JSON must contain an array or object of records.');
+}
 
-The local PAK file has a 36,675,915-byte length and a trailer containing the Unreal PAK magic value and version field. The footer reports an index offset of 36,537,246 and index size of 27,712 bytes. The byte immediately before the PAK magic is `0x01`, which is the PAK footer's encrypted-index flag. So the index is explicitly marked encrypted; this is stronger evidence than the unreadable bytes alone. The stored SHA-1 also does not match a direct hash of the apparent index region. The footer contains the compression-method label `Oodle`.
+function findIdField(records, candidates, sourceLabel) {
+  const first = records.find((row) => row && typeof row === 'object');
+  if (!first) throw new Error(sourceLabel + ' contains no data rows.');
+  const fields = new Map(Object.keys(first).map((key) => [normalizeKey(key), key]));
+  for (const candidate of candidates) {
+    const found = fields.get(normalizeKey(candidate));
+    if (found) return found;
+  }
+  if (fields.has('mapkey')) return fields.get('mapkey');
+  throw new Error(
+    'Could not identify the ID column in ' + sourceLabel +
+    '. Available fields: ' + Object.keys(first).join(', ')
+  );
+}
 
-A direct string scan of the supplied PAK did not find plaintext names such as `m2data`, `item_proto`, or `mob_proto`. The executable additionally references expected data files including `box_proto.txt`, `item_list.txt`, `hair_data.txt`, `npclist.txt`, class-specific character data files, `item_names.txt`, `mob_names.txt`, `itemdesc.txt`, and locale text files. Their actual contents have not been located in the supplied files. This is consistent with an encrypted index and/or packed content, but it does not prove which assets are inside. The executable contains generic AES/decryption-related strings, but no usable key has been established. Do not infer a key or bypass client protections from those strings.
+function readTsv(filePath) {
+  const text = fs.readFileSync(filePath, 'utf8').replace(/^\uFEFF/, '').trim();
+  if (!text) throw new Error('Source table is empty: ' + filePath);
+  const lines = text.split(/\r?\n/);
+  const headers = lines.shift().split('\t').map((field) => field.trim());
+  if (headers.length < 2) {
+    throw new Error('Expected a tab-separated table with a header row: ' + filePath);
+  }
+  const records = [];
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    if (!lines[lineIndex].trim()) continue;
+    const values = lines[lineIndex].split('\t');
+    const record = {};
+    headers.forEach((header, index) => { record[header] = values[index] ?? ''; });
+    records.push(record);
+  }
+  return { headers, records };
+}
 
-## Compatibility conclusion
+function toId(value) {
+  const text = String(value ?? '').trim();
+  return text || null;
+}
 
-Mobile2 is useful as a *reference for investigation*, but it is not currently a drop-in client or asset source for this Metin2 server:
+function indexRecords(records, idField) {
+  const byId = new Map();
+  const duplicateIds = [];
+  let missingIdCount = 0;
+  for (const row of records) {
+    const id = toId(row[idField]);
+    if (id === null) {
+      missingIdCount += 1;
+      continue;
+    }
+    if (byId.has(id)) duplicateIds.push(id);
+    else byId.set(id, row);
+  }
+  return { byId, duplicateIds, missingIdCount };
+}
 
-- Unreal Engine PAK data cannot be copied directly into the classic Metin2 client.
-- Unreal Engine runtime DLLs do not replace the classic client's Granny2 runtime.
-- Names embedded in an executable only show that the program references those names; they do not prove the corresponding data files are available.
-- The current server's data is maintained in its own formats under `src/core/infra/config/data/`, including `items.json` and `mobs.json`.
+function main() {
+  const args = process.argv.slice(2);
+  const kindIndex = args.indexOf('--kind');
+  const sourceIndex = args.indexOf('--source');
+  const kind = kindIndex >= 0 ? args[kindIndex + 1] : '';
+  const sourcePath = sourceIndex >= 0 ? args[sourceIndex + 1] : '';
+  if (!CONFIGS[kind] || !sourcePath) {
+    console.error(
+      'Usage: node tools/compareMobile2Proto.js --kind items|mobs --source /path/to/exported_proto.txt\n' +
+      'Input must be a legally obtained/exported TSV with a header row.'
+    );
+    process.exitCode = 2;
+    return;
+  }
 
-## Safe next steps
+  const config = CONFIGS[kind];
+  const source = readTsv(path.resolve(sourcePath));
+  const serverJson = JSON.parse(fs.readFileSync(config.serverPath, 'utf8'));
+  const serverRecords = getRecords(serverJson);
+  const sourceIdField = findIdField(source.records, config.idCandidates, 'exported source table');
+  const serverIdField = findIdField(serverRecords, config.idCandidates, 'server JSON');
+  const sourceIndexData = indexRecords(source.records, sourceIdField);
+  const serverIndexData = indexRecords(serverRecords, serverIdField);
+  const sourceIds = [...sourceIndexData.byId.keys()];
+  const serverIds = [...serverIndexData.byId.keys()];
+  const serverIdSet = new Set(serverIds);
+  const sourceIdSet = new Set(sourceIds);
+  const sourceOnly = sourceIds.filter((id) => !serverIdSet.has(id));
+  const serverOnly = serverIds.filter((id) => !sourceIdSet.has(id));
+  const shared = sourceIds.filter((id) => serverIdSet.has(id));
 
-1. Continue server development independently of Mobile2.
-2. If readable, lawfully usable exports of Mobile2's item/mob/skill tables become available, compare their schema and identifiers with the server's JSON data before importing anything.
-3. Treat models, maps, textures, sounds, and client binaries as unavailable until their actual files, format, and redistribution rights are confirmed.
-4. Keep the Windows client release disabled until a matching, complete runtime and game-data folder is available and the real client login path has been tested.
+  const report = {
+    kind,
+    sourceFile: path.resolve(sourcePath),
+    serverFile: path.relative(ROOT, config.serverPath),
+    sourceRows: source.records.length,
+    serverRows: serverRecords.length,
+    sourceIdField,
+    serverIdField,
+    sharedIdCount: shared.length,
+    sourceOnlyIdCount: sourceOnly.length,
+    serverOnlyIdCount: serverOnly.length,
+    sourceDuplicateIds: [...new Set(sourceIndexData.duplicateIds)],
+    serverDuplicateIds: [...new Set(serverIndexData.duplicateIds)],
+    sourceRowsMissingId: sourceIndexData.missingIdCount,
+    serverRowsMissingId: serverIndexData.missingIdCount,
+    sampleSourceOnlyIds: sourceOnly.slice(0, 50),
+    sampleServerOnlyIds: serverOnly.slice(0, 50),
+    note: 'ID overlap only; this does not establish field/schema compatibility or permission to reuse assets.',
+  };
+  process.stdout.write(JSON.stringify(report, null, 2) + '\n');
+}
 
-Do not mark Mobile2 asset reuse or classic-client compatibility as complete based only on executable strings or PAK signatures.
-
-## Follow-up: what the encrypted-index flag means
-
-The official Unreal Engine 4.27 documentation describes **Encrypt Pak Index** as preventing UnrealPak from opening, viewing, and unpacking a PAK index unless the required encryption key is supplied. It separately describes **Encrypt UAsset Files** and **Encrypt Assets**, so the encrypted-index flag alone does **not** prove that every payload asset is encrypted.
-
-Official reference: https://dev.epicgames.com/documentation/unreal-engine/packaging-projects?application_version=4.27 (section “Signing and Encryption”).
-
-### Practical next step
-
-- If the project owner or authorized build environment can provide the matching PAK encryption key/configuration, use that with a compatible Unreal Engine 4.27 UnrealPak build and verify the archive against the tool output.
-- If no authorized key/configuration is available, do not brute-force keys or attempt to defeat the protection. Continue with the already available executable metadata and independently sourced/exported game tables, or request an authorized export from the Mobile2 publisher/developer.
-- The current supplied folder does not include UnrealPak.exe in the reported Engine binaries path. The UE prerequisites installer is not an archive extractor. No PAK files have been extracted yet, and no decryption key has been identified.
-- Even if files can be extracted, their reuse in ASHEN REALM must be checked separately for permission and for format compatibility; UE assets are not directly interchangeable with the classic Metin2 client.
-
-This narrows the blocker to two distinct questions: whether a matching authorized key/toolchain can be obtained, and whether the payload itself uses additional encryption.
+try {
+  main();
+} catch (error) {
+  console.error('Mobile2 proto comparison failed: ' + error.message);
+  process.exitCode = 1;
+}
