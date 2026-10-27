@@ -32,3 +32,18 @@ Mobile2 is useful as a *reference for investigation*, but it is not currently a 
 4. Keep the Windows client release disabled until a matching, complete runtime and game-data folder is available and the real client login path has been tested.
 
 Do not mark Mobile2 asset reuse or classic-client compatibility as complete based only on executable strings or PAK signatures.
+
+## Follow-up: what the encrypted-index flag means
+
+The official Unreal Engine 4.27 documentation describes **Encrypt Pak Index** as preventing UnrealPak from opening, viewing, and unpacking a PAK index unless the required encryption key is supplied. It separately describes **Encrypt UAsset Files** and **Encrypt Assets**, so the encrypted-index flag alone does **not** prove that every payload asset is encrypted.
+
+Official reference: https://dev.epicgames.com/documentation/unreal-engine/packaging-projects?application_version=4.27 (section “Signing and Encryption”).
+
+### Practical next step
+
+- If the project owner or authorized build environment can provide the matching PAK encryption key/configuration, use that with a compatible Unreal Engine 4.27 UnrealPak build and verify the archive against the tool output.
+- If no authorized key/configuration is available, do not brute-force keys or attempt to defeat the protection. Continue with the already available executable metadata and independently sourced/exported game tables, or request an authorized export from the Mobile2 publisher/developer.
+- The current supplied folder does not include UnrealPak.exe in the reported Engine binaries path. The UE prerequisites installer is not an archive extractor. No PAK files have been extracted yet, and no decryption key has been identified.
+- Even if files can be extracted, their reuse in ASHEN REALM must be checked separately for permission and for format compatibility; UE assets are not directly interchangeable with the classic Metin2 client.
+
+This narrows the blocker to two distinct questions: whether a matching authorized key/toolchain can be obtained, and whether the payload itself uses additional encryption.
