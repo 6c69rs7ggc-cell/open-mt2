@@ -7,13 +7,13 @@ The supplied Mobile2Global folder contains an Unreal Engine-style layout:
 - `Engine/Content/Paks/pakchunk0-WindowsNoEditor.pak` (36,675,915 bytes).
 - Several `pakchunk*-WindowsNoEditor.sig` signature files, but only one corresponding `.pak` file was present in the file listing.
 - CEF3 runtime files and language `.pak` files under `Engine/Binaries/ThirdParty/CEF3/Win64/Resources`; these are Chromium Embedded Framework resources, not evidence of Metin2 world assets.
-- The reported executable `mobilemmo-Win64-Shipping.exe` contains strings referencing Unreal Engine 4.27 and Metin2-style data names such as `item_proto`, `mob_proto`, `skill_proto`, `m2data/warriorData.txt`, and a `.gr2` model name.
+- The reported executable `mobilemmo-Win64-Shipping.exe` contains strings referencing Unreal Engine 4.27 and Metin2-style data names such as `item_proto`, `mob_proto`, `skill_proto`, `m2data/warriorData.txt`, and a `.gr2` model name. It also references UE asset paths for Warrior/Warrior2, Sura/Sura2, Ninja/Ninja2 and Shaman/Shaman2 character classes, plus folders for mobs, mounts, sounds, item icons and effects. These are path/name references compiled into the executable, not extracted assets.
 
 ### PAK inspection
 
 The local PAK file has a 36,675,915-byte length and a trailer containing the Unreal PAK magic value and version field. The footer reports an index offset of 36,537,246 and index size of 27,712 bytes. The byte immediately before the PAK magic is `0x01`, which is the PAK footer's encrypted-index flag. So the index is explicitly marked encrypted; this is stronger evidence than the unreadable bytes alone. The stored SHA-1 also does not match a direct hash of the apparent index region. The footer contains the compression-method label `Oodle`.
 
-A direct string scan of the supplied PAK did not find plaintext names such as `m2data`, `item_proto`, or `mob_proto`. This is consistent with an encrypted index and/or packed content, but it does not prove which assets are inside. The executable contains generic AES/decryption-related strings, but no usable key has been established. Do not infer a key or bypass client protections from those strings.
+A direct string scan of the supplied PAK did not find plaintext names such as `m2data`, `item_proto`, or `mob_proto`. The executable additionally references expected data files including `box_proto.txt`, `item_list.txt`, `hair_data.txt`, `npclist.txt`, class-specific character data files, `item_names.txt`, `mob_names.txt`, `itemdesc.txt`, and locale text files. Their actual contents have not been located in the supplied files. This is consistent with an encrypted index and/or packed content, but it does not prove which assets are inside. The executable contains generic AES/decryption-related strings, but no usable key has been established. Do not infer a key or bypass client protections from those strings.
 
 ## Compatibility conclusion
 
