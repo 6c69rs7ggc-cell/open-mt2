@@ -9,7 +9,11 @@ The supplied Mobile2Global folder contains an Unreal Engine-style layout:
 - CEF3 runtime files and language `.pak` files under `Engine/Binaries/ThirdParty/CEF3/Win64/Resources`; these are Chromium Embedded Framework resources, not evidence of Metin2 world assets.
 - The reported executable `mobilemmo-Win64-Shipping.exe` contains strings referencing Unreal Engine 4.27 and Metin2-style data names such as `item_proto`, `mob_proto`, `skill_proto`, `m2data/warriorData.txt`, and a `.gr2` model name.
 
-The PAK trailer appears to contain the Unreal PAK magic bytes. Its file index has not been successfully parsed or verified. No actual item/mob tables, model files, textures, or map assets have been confirmed as extracted from the supplied package.
+### PAK inspection
+
+The local PAK file has a 36,675,915-byte length and a trailer containing the Unreal PAK magic value and version field. The footer reports an index offset of 36,537,246 and index size of 27,712 bytes. The index region does not contain readable file paths; its bytes look encrypted, and the stored SHA-1 does not match a direct hash of that region. The footer also contains the compression-method label `Oodle`.
+
+A direct string scan of the supplied PAK did not find plaintext names such as `m2data`, `item_proto`, or `mob_proto`. This is consistent with an encrypted index and/or packed content, but it does not prove which assets are inside. The executable contains generic AES/decryption-related strings, but no usable key has been established. Do not infer a key or bypass client protections from those strings.
 
 ## Compatibility conclusion
 
