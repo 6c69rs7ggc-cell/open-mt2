@@ -36,7 +36,9 @@ jobs:
       - name: Build Crypto++ 5.6.2 static library
         shell: pwsh
         run: |
-          msbuild cryptopp-source/cryptlib.vcxproj /m /t:Build /p:Configuration=Release /p:Platform=Win32 /p:PlatformToolset=v143 /verbosity:minimal
+          if (-not (Test-Path "cryptopp-source/cryptest.sln")) { throw "Crypto++ 5.6.2 solution cryptest.sln was not found." }
+          # Crypto++ 5.6.2 uses legacy .vcproj projects, grouped in cryptest.sln; build its cryptlib project through the solution.
+          msbuild cryptopp-source/cryptest.sln /m /t:cryptlib /p:Configuration=Release /p:Platform=Win32 /verbosity:minimal
           $lib = "cryptopp-source/Win32/Output/Release/cryptlib.lib"
           if (-not (Test-Path $lib)) {
             $lib = Get-ChildItem "cryptopp-source" -Recurse -Filter cryptlib.lib | Where-Object { $_.FullName -match "Win32.*Release" } | Select-Object -First 1 -ExpandProperty FullName
