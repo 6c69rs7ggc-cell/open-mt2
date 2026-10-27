@@ -86,8 +86,9 @@ jobs:
           $uiProject = "client-source/vs_files/UserInterface/UserInterface.vcxproj"
           $uiSource = Get-Content $uiProject -Raw
           if ($uiSource -notmatch 'SphereLib.*SphereLib.vcxproj') {
-            $sphereUiReference = '  <ItemGroup><ProjectReference Include="..\\SphereLib\\SphereLib.vcxproj"><Project>{B1F24BAE-61E8-41E9-B2BB-A6905E5D64FD}</Project><Private>false</Private><ReferenceOutputAssembly>false</ReferenceOutputAssembly><CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies><LinkLibraryDependencies>true</LinkLibraryDependencies><UseLibraryDependencyInputs>false</UseLibraryDependencyInputs></ProjectReference></ItemGroup>'
-            $uiAnchor = '  <Import Project="$(VCTargetsPath)\\Microsoft.Cpp.targets" />'
+            $sphereUiReference = '  <ItemGroup><ProjectReference Include="..\SphereLib\SphereLib.vcxproj"><Project>{B1F24BAE-61E8-41E9-B2BB-A6905E5D64FD}</Project><Private>false</Private><ReferenceOutputAssembly>false</ReferenceOutputAssembly><CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies><LinkLibraryDependencies>true</LinkLibraryDependencies><UseLibraryDependencyInputs>false</UseLibraryDependencyInputs></ProjectReference></ItemGroup>'
+            $uiAnchor = '  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />'
+            if (-not $uiSource.Contains($uiAnchor)) { throw "Could not locate UserInterface MSBuild targets import for SphereLib reference." }
             $uiSource = $uiSource.Replace($uiAnchor, $sphereUiReference + "`r`n" + $uiAnchor)
             Set-Content -Path $uiProject -Value $uiSource -NoNewline
           }
