@@ -110,9 +110,9 @@ jobs:
           $releaseGroup = $releaseGroupMatch.Value
           $linkPattern = '(?s)<Link>(.*?)</Link>'
           if ($releaseGroup -notmatch $linkPattern) { throw "Could not find Link section in Release|Win32 item definition group." }
-          $linkReplacement = '<Link>' + "`r`n      <AdditionalDependencies>" + '$(SolutionDir)vs_files\SphereLib\Release\SphereLib.lib;$(SolutionDir)extern\library\Cryptopp_lib_release.lib;%(AdditionalDependencies)</AdditionalDependencies>' + '$1</Link>'
+          $linkReplacement = '<Link>' + "`r`n      <AdditionalDependencies>" + '$(SolutionDir)SphereLib\Release\SphereLib.lib;$(SolutionDir)extern\library\Cryptopp_lib_release.lib;%(AdditionalDependencies)</AdditionalDependencies>' + '$1</Link>'
           $releaseGroup = [regex]::Replace($releaseGroup, $linkPattern, $linkReplacement, 1)
-          if ($releaseGroup -notmatch [regex]::Escape('$(SolutionDir)vs_files\SphereLib\Release\SphereLib.lib') -or $releaseGroup -notmatch [regex]::Escape('$(SolutionDir)extern\library\Cryptopp_lib_release.lib')) {
+          if ($releaseGroup -notmatch [regex]::Escape('$(SolutionDir)SphereLib\Release\SphereLib.lib') -or $releaseGroup -notmatch [regex]::Escape('$(SolutionDir)extern\library\Cryptopp_lib_release.lib')) {
             throw "Explicit SphereLib/Crypto++ dependencies were not inserted into the Release linker settings."
           }
           Write-Host "Release linker will use SphereLib.lib and Crypto++ 5.6.2, matching the bundled Crypto++ headers."
