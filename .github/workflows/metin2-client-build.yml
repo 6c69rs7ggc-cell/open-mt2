@@ -93,6 +93,12 @@ jobs:
             Set-Content -Path $uiProject -Value $uiSource -NoNewline
           }
 
+          # Add the generated Crypto++ archive to the final executable link.
+          if ($uiSource -notmatch 'Cryptopp_lib_release') {
+            $uiSource = $uiSource.Replace('<Link>', '<Link>`r`n      <AdditionalDependencies>Cryptopp_lib_release.lib;%(AdditionalDependencies)</AdditionalDependencies>')
+            Set-Content -Path $uiProject -Value $uiSource -NoNewline
+          }
+
           # Legacy libjpeg expects the pre-UCRT __iob_func symbol.
           $jpegCompat = "client-source/source/EterLib/JpegFile.cpp"
           $jpegCompatSource = Get-Content $jpegCompat -Raw
