@@ -74,8 +74,8 @@ jobs:
           # EterLib uses SpherePack symbols but upstream omits the SphereLib project reference.
           $eterProject = "client-source/vs_files/EterLib/EterLib.vcxproj"
           $eterSource = Get-Content $eterProject -Raw
-          if ($eterSource -notmatch 'SphereLib\\SphereLib.vcxproj') {
-            $sphereReference = "    <ProjectReference Include=`"..\SphereLib\SphereLib.vcxproj`"><Project>{B1F24BAE-61E8-41E9-B2BB-A6905E5D64FD}</Project><Private>false</Private><ReferenceOutputAssembly>false</ReferenceOutputAssembly><CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies><LinkLibraryDependencies>true</LinkLibraryDependencies><UseLibraryDependencyInputs>false</UseLibraryDependencyInputs></ProjectReference>"
+          if ($eterSource -notmatch 'SphereLib.*SphereLib.vcxproj') {
+            $sphereReference = '  <ItemGroup><ProjectReference Include="..\SphereLib\SphereLib.vcxproj"><Project>{B1F24BAE-61E8-41E9-B2BB-A6905E5D64FD}</Project><Private>false</Private><ReferenceOutputAssembly>false</ReferenceOutputAssembly><CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies><LinkLibraryDependencies>true</LinkLibraryDependencies><UseLibraryDependencyInputs>false</UseLibraryDependencyInputs></ProjectReference></ItemGroup>'
             $anchor = '  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />'
             $eterSource = $eterSource.Replace($anchor, $sphereReference + "`r`n" + $anchor)
             Set-Content -Path $eterProject -Value $eterSource -NoNewline
