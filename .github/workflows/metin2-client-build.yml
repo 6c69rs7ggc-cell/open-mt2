@@ -93,9 +93,11 @@ jobs:
             Set-Content -Path $uiProject -Value $uiSource -NoNewline
           }
 
-          # Add the generated Crypto++ archive to the final executable link.
+          # Add Crypto++ only to the Release|Win32 final executable linker inputs.
           if ($uiSource -notmatch 'Cryptopp_lib_release') {
-            $uiSource = $uiSource.Replace('<Link>', '<Link>`r`n      <AdditionalDependencies>Cryptopp_lib_release.lib;%(AdditionalDependencies)</AdditionalDependencies>')
+            $linkBlock = '(?s)(<ItemDefinitionGroup Condition="' + [regex]::Escape("'`$(Configuration)|`$(Platform)'=='Release|Win32'") + '".*?<Link>)'
+            if ($uiSource -notmatch $linkBlock) { throw "Could not find Release|Win32 linker block in UserInterface project." }
+            $uiSource = [regex]::Replace($uiSource, $linkBlock, ('$1' + "`r`n      <AdditionalDependencies>Cryptopp_lib_release.lib;%(AdditionalDependencies)</AdditionalDependencies>"), 1)
             Set-Content -Path $uiProject -Value $uiSource -NoNewline
           }
 
