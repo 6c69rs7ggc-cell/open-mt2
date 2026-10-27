@@ -93,11 +93,18 @@ jobs:
             Set-Content -Path $uiProject -Value $uiSource -NoNewline
           }
 
-          # Add Crypto++ only to the Release|Win32 final executable linker inputs.
+          # Add Crypto++ to the existing Release|Win32 dependency list on the final executable.
           if ($uiSource -notmatch 'Cryptopp_lib_release') {
-            $linkBlock = '(?s)(<ItemDefinitionGroup[^>]*Condition="[^"]*Release\|Win32[^"]*"[^>]*>.*?<Link>)'
-            if ($uiSource -notmatch $linkBlock) { throw "Could not find Release|Win32 linker block in UserInterface project." }
-            $uiSource = [regex]::Replace($uiSource, $linkBlock, ('$1' + "`r`n      <AdditionalDependencies>Cryptopp_lib_release.lib;%(AdditionalDependencies)</AdditionalDependencies>"), 1)
+            $releaseGroupPattern = '(?s)<ItemDefinitionGroup[^>]*Condition="[^"]*Release\|Win32[^"]*"[^>]*>.*?</ItemDefinitionGroup>'
+            $releaseGroupMatch = [regex]::Match($uiSource, $releaseGroupPattern)
+            if (-not $releaseGroupMatch.Success) { throw "Could not find Release|Win32 item definition group in UserInterface project." }
+            $releaseGroup = $releaseGroupMatch.Value
+            if ($releaseGroup -match '<AdditionalDependencies>') {
+              $releaseGroup = [regex]::Replace($releaseGroup, '<AdditionalDependencies>(.*?)</AdditionalDependencies>', '<AdditionalDependencies>Cryptopp_lib_release.lib;$1</AdditionalDependencies>', 1)
+            } else {
+              $releaseGroup = [regex]::Replace($releaseGroup, '<Link>', '<Link>' + "`r`n      <AdditionalDependencies>Cryptopp_lib_release.lib;%(AdditionalDependencies)</AdditionalDependencies>", 1)
+            }
+            $uiSource = $uiSource.Substring(0, $releaseGroupMatch.Index) + $releaseGroup + $uiSource.Substring($releaseGroupMatch.Index + $releaseGroupMatch.Length)
             Set-Content -Path $uiProject -Value $uiSource -NoNewline
           }
 
