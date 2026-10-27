@@ -81,6 +81,17 @@ jobs:
             Set-Content -Path $eterProject -Value $eterSource -NoNewline
           }
 
+          # UserInterface is the final executable; explicitly link SphereLib because
+          # static-library project references are not reliably propagated to the final link.
+          $uiProject = "client-source/vs_files/UserInterface/UserInterface.vcxproj"
+          $uiSource = Get-Content $uiProject -Raw
+          if ($uiSource -notmatch 'SphereLib.*SphereLib.vcxproj') {
+            $sphereUiReference = '  <ItemGroup><ProjectReference Include="..\\SphereLib\\SphereLib.vcxproj"><Project>{B1F24BAE-61E8-41E9-B2BB-A6905E5D64FD}</Project><Private>false</Private><ReferenceOutputAssembly>false</ReferenceOutputAssembly><CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies><LinkLibraryDependencies>true</LinkLibraryDependencies><UseLibraryDependencyInputs>false</UseLibraryDependencyInputs></ProjectReference></ItemGroup>'
+            $uiAnchor = '  <Import Project="$(VCTargetsPath)\\Microsoft.Cpp.targets" />'
+            $uiSource = $uiSource.Replace($uiAnchor, $sphereUiReference + "`r`n" + $uiAnchor)
+            Set-Content -Path $uiProject -Value $uiSource -NoNewline
+          }
+
           # Legacy libjpeg expects the pre-UCRT __iob_func symbol.
           $jpegCompat = "client-source/source/EterLib/JpegFile.cpp"
           $jpegCompatSource = Get-Content $jpegCompat -Raw
