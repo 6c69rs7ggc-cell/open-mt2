@@ -1,4 +1,4 @@
-name: Metin2 Client Build Check
+name: Build and publish ASHEN REALM client
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
       - ".github/workflows/metin2-client-build.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-client:
@@ -147,10 +147,41 @@ jobs:
         run: |
           msbuild client-source/client.sln /m /t:Build /p:Configuration=Release /p:Platform=Win32 /p:PlatformToolset=v143 /p:LanguageStandard=stdcpp14 /p:RestorePackagesConfig=true /verbosity:minimal
 
-      - name: Verify and upload Metin2 client executable
+      - name: Package Windows client as ZIP
+        shell: pwsh
+        run: |
+          $exe = "client-source/binary/Metin2Release.exe"
+          if (-not (Test-Path $exe)) { throw "Build succeeded but Metin2Release.exe is missing." }
+          $package = "release-package"
+          New-Item -ItemType Directory -Force -Path $package | Out-Null
+          Copy-Item $exe "$package/Metin2Release.exe" -Force
+          @'
+          ASHEN REALM — Testovací Windows klient
+
+          Spustenie: Metin2Release.exe
+          Toto je testovacia zostava. Kompatibilita prihlásenia a pripojenie na herný server zatiaľ nie sú potvrdené.
+          Používajte iba na vlastné riziko a s vedomím, že ide o vývojovú verziu.
+          '@ | Set-Content -Path "$package/README.txt" -Encoding UTF8
+          Compress-Archive -Path "$package/*" -DestinationPath "ASHEN-REALM-Client.zip" -Force
+          if (-not (Test-Path "ASHEN-REALM-Client.zip")) { throw "Client ZIP package was not created." }
+
+      - name: Upload temporary build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Metin2Release-Win32
-          path: client-source/binary/Metin2Release.exe
+          name: ASHEN-REALM-Client
+          path: ASHEN-REALM-Client.zip
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish permanent GitHub Release download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.0
+          name: ASHEN REALM Client v0.1.0
+          body: |
+            Prvá testovacia Windows zostava klienta ASHEN REALM.
+
+            **Upozornenie:** prihlásenie a pripojenie na herný server nie sú zatiaľ potvrdené. Toto nie je finálna hrateľná verzia.
+          files: ASHEN-REALM-Client.zip
+          make_latest: true
+          fail_on_unmatched_files: true
