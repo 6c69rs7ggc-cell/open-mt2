@@ -146,3 +146,11 @@ jobs:
         shell: pwsh
         run: |
           msbuild client-source/client.sln /m /t:Build /p:Configuration=Release /p:Platform=Win32 /p:PlatformToolset=v143 /p:LanguageStandard=stdcpp14 /p:RestorePackagesConfig=true /verbosity:minimal
+
+      - name: Verify and upload Metin2 client executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Metin2Release-Win32
+          path: client-source/binary/Metin2Release.exe
+          if-no-files-found: error
+          retention-days: 14
