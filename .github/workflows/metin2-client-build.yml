@@ -37,8 +37,16 @@ jobs:
         shell: pwsh
         run: |
           if (-not (Test-Path "cryptopp-source/cryptest.sln")) { throw "Crypto++ 5.6.2 solution cryptest.sln was not found." }
-          # Crypto++ 5.6.2 uses legacy .vcproj projects, grouped in cryptest.sln; build its cryptlib project through the solution.
-          msbuild cryptopp-source/cryptest.sln /m /t:cryptlib /p:Configuration=Release /p:Platform=Win32 /verbosity:minimal
+          # Crypto++ 5.6.2 ships legacy Visual Studio 2005 .vcproj projects. Upgrade them before MSBuild.
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsRoot = & $vswhere -latest -products * -property installationPath
+          $devenv = Join-Path $vsRoot "Common7\IDE\devenv.com"
+          if (-not (Test-Path $devenv)) { throw "Visual Studio devenv.com was not found at $devenv" }
+          & $devenv "cryptopp-source/cryptest.sln" /Upgrade
+          if ($LASTEXITCODE -ne 0) { throw "Visual Studio could not upgrade the legacy Crypto++ 5.6.2 solution." }
+          $cryptlibProject = "cryptopp-source/cryptlib.vcxproj"
+          if (-not (Test-Path $cryptlibProject)) { throw "Crypto++ upgrade did not produce cryptlib.vcxproj." }
+          msbuild $cryptlibProject /m /t:Build /p:Configuration=Release /p:Platform=Win32 /p:PlatformToolset=v143 /verbosity:minimal
           $lib = "cryptopp-source/Win32/Output/Release/cryptlib.lib"
           if (-not (Test-Path $lib)) {
             $lib = Get-ChildItem "cryptopp-source" -Recurse -Filter cryptlib.lib | Where-Object { $_.FullName -match "Win32.*Release" } | Select-Object -First 1 -ExpandProperty FullName
