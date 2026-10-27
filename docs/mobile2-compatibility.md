@@ -11,7 +11,7 @@ The supplied Mobile2Global folder contains an Unreal Engine-style layout:
 
 ### PAK inspection
 
-The local PAK file has a 36,675,915-byte length and a trailer containing the Unreal PAK magic value and version field. The footer reports an index offset of 36,537,246 and index size of 27,712 bytes. The index region does not contain readable file paths; its bytes look encrypted, and the stored SHA-1 does not match a direct hash of that region. The footer also contains the compression-method label `Oodle`.
+The local PAK file has a 36,675,915-byte length and a trailer containing the Unreal PAK magic value and version field. The footer reports an index offset of 36,537,246 and index size of 27,712 bytes. The byte immediately before the PAK magic is `0x01`, which is the PAK footer's encrypted-index flag. So the index is explicitly marked encrypted; this is stronger evidence than the unreadable bytes alone. The stored SHA-1 also does not match a direct hash of the apparent index region. The footer contains the compression-method label `Oodle`.
 
 A direct string scan of the supplied PAK did not find plaintext names such as `m2data`, `item_proto`, or `mob_proto`. This is consistent with an encrypted index and/or packed content, but it does not prove which assets are inside. The executable contains generic AES/decryption-related strings, but no usable key has been established. Do not infer a key or bypass client protections from those strings.
 
