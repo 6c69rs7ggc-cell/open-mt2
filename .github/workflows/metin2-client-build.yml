@@ -27,13 +27,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: weidai11/cryptopp
-          ref: CRYPTOPP_5_6_5
+          ref: CRYPTOPP_5_6_2
           path: cryptopp-source
 
       - name: Set up MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Build Crypto++ 5.6.5 static library matching bundled headers
+      - name: Build Crypto++ 5.6.2 static library matching bundled headers
         shell: pwsh
         run: |
           msbuild cryptopp-source/cryptlib.vcxproj /m /t:Build /p:Configuration=Release /p:Platform=Win32 /p:PlatformToolset=v143 /verbosity:minimal
@@ -42,7 +42,7 @@ jobs:
             $lib = Get-ChildItem "cryptopp-source" -Recurse -Filter cryptlib.lib | Where-Object { $_.FullName -match "Win32.*Release" } | Select-Object -First 1 -ExpandProperty FullName
           }
           if (-not $lib -or -not (Test-Path $lib)) {
-            throw "Crypto++ 5.6.5 static library was not produced; expected cryptlib.lib under Win32 Release output."
+            throw "Crypto++ 5.6.2 static library was not produced; expected cryptlib.lib under Win32 Release output."
           }
           New-Item -ItemType Directory -Force -Path "client-source/extern/library" | Out-Null
           Copy-Item $lib "client-source/extern/library/Cryptopp_lib_release.lib" -Force
@@ -70,6 +70,24 @@ jobs:
           $resourceSource = Get-Content $resource -Raw
           $resourceSource = $resourceSource.Replace('#include "afxres.h"', "#include <winres.h>`r`n#ifndef IDC_STATIC`r`n#define IDC_STATIC -1`r`n#endif")
           Set-Content -Path $resource -Value $resourceSource -NoNewline
+
+          # EterLib uses SpherePack symbols but upstream omits the SphereLib project reference.
+          $eterProject = "client-source/vs_files/EterLib/EterLib.vcxproj"
+          $eterSource = Get-Content $eterProject -Raw
+          if ($eterSource -notmatch 'SphereLib\\SphereLib.vcxproj') {
+            $sphereReference = "    <ProjectReference Include=`"..\SphereLib\SphereLib.vcxproj`"><Project>{B1F24BAE-61E8-41E9-B2BB-A6905E5D64FD}</Project><Private>false</Private><ReferenceOutputAssembly>false</ReferenceOutputAssembly><CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies><LinkLibraryDependencies>true</LinkLibraryDependencies><UseLibraryDependencyInputs>false</UseLibraryDependencyInputs></ProjectReference>"
+            $anchor = '  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />'
+            $eterSource = $eterSource.Replace($anchor, $sphereReference + "`r`n" + $anchor)
+            Set-Content -Path $eterProject -Value $eterSource -NoNewline
+          }
+
+          # Legacy libjpeg expects the pre-UCRT __iob_func symbol.
+          $jpegCompat = "client-source/source/EterLib/JpegFile.cpp"
+          $jpegCompatSource = Get-Content $jpegCompat -Raw
+          if ($jpegCompatSource -notmatch '__iob_func') {
+            $jpegCompatSource += "`r`n#include <stdio.h>`r`nextern \"C\" FILE __iob_func[3] = { *stdin, *stdout, *stderr };`r`n"
+            Set-Content -Path $jpegCompat -Value $jpegCompatSource -NoNewline
+          }
 
           $miles = "client-source/vs_files/MilesLib/MilesLib.vcxproj"
           $projectSource = Get-Content $miles -Raw
