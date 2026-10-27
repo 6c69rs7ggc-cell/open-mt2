@@ -94,6 +94,29 @@ describe('CommandManager', () => {
         })).to.be.true;
     });
 
+    it('should deny privileged commands when GM_ACCOUNT_IDS is empty', async () => {
+        process.env.GM_ACCOUNT_IDS = '';
+        playerStub.getAccountId.returns(42);
+
+        await commandManager.execute({ message: '/test', player: playerStub });
+
+        expect(commandHandlerStub.execute.called).to.be.false;
+        expect(playerStub.chat.calledWith({
+            message: '[SYSTEM] You do not have permission to use this command.',
+            messageType: ChatMessageTypeEnum.INFO,
+        })).to.be.true;
+    });
+
+    it('should accept a configured account ID in a comma-separated list and ignore invalid IDs', async () => {
+        process.env.GM_ACCOUNT_IDS = 'invalid, 42, 0, -7, 9007199254740992';
+        playerStub.getAccountId.returns(42);
+
+        await commandManager.execute({ message: '/test', player: playerStub });
+
+        expect(commandHandlerStub.execute.calledOnce).to.be.true;
+        expect(playerStub.chat.called).to.be.false;
+    });
+
     it('should allow /accountid for a non-GM account', async () => {
         playerStub.getAccountId.returns(999);
 
