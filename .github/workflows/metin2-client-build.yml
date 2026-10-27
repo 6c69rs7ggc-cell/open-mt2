@@ -93,20 +93,17 @@ jobs:
             Set-Content -Path $uiProject -Value $uiSource -NoNewline
           }
 
-          # Add Crypto++ to the existing Release|Win32 dependency list on the final executable.
-          if ($uiSource -notmatch 'Cryptopp_lib_release') {
-            $releaseGroupPattern = '(?s)<ItemDefinitionGroup[^>]*Condition="[^"]*Release\|Win32[^"]*"[^>]*>.*?</ItemDefinitionGroup>'
-            $releaseGroupMatch = [regex]::Match($uiSource, $releaseGroupPattern)
-            if (-not $releaseGroupMatch.Success) { throw "Could not find Release|Win32 item definition group in UserInterface project." }
-            $releaseGroup = $releaseGroupMatch.Value
-            if ($releaseGroup -match '<AdditionalDependencies>') {
-              $releaseGroup = [regex]::Replace($releaseGroup, '<AdditionalDependencies>(.*?)</AdditionalDependencies>', '<AdditionalDependencies>Cryptopp_lib_release.lib;$1</AdditionalDependencies>', 1)
-            } else {
-              $releaseGroup = [regex]::Replace($releaseGroup, '<Link>', '<Link>' + "`r`n      <AdditionalDependencies>Cryptopp_lib_release.lib;%(AdditionalDependencies)</AdditionalDependencies>", 1)
-            }
-            $uiSource = $uiSource.Substring(0, $releaseGroupMatch.Index) + $releaseGroup + $uiSource.Substring($releaseGroupMatch.Index + $releaseGroupMatch.Length)
-            Set-Content -Path $uiProject -Value $uiSource -NoNewline
-          }
+          # Force the final executable to link the concrete archives, not just rely on transitive project references.
+          $releaseGroupPattern = '(?s)<ItemDefinitionGroup[^>]*Condition="[^"]*Release\|Win32[^"]*"[^>]*>.*?</ItemDefinitionGroup>'
+          $releaseGroupMatch = [regex]::Match($uiSource, $releaseGroupPattern)
+          if (-not $releaseGroupMatch.Success) { throw "Could not find Release|Win32 item definition group in UserInterface project." }
+          $releaseGroup = $releaseGroupMatch.Value
+          $linkPattern = '(?s)<Link>(.*?)</Link>'
+          if ($releaseGroup -notmatch $linkPattern) { throw "Could not find Link section in Release|Win32 item definition group." }
+          $linkReplacement = '<Link>' + "`r`n      <AdditionalDependencies>$(SolutionDir)vs_files\SphereLib\Release\SphereLib.lib;$(SolutionDir)extern\library\Cryptopp_lib_release.lib;%(AdditionalDependencies)</AdditionalDependencies>" + '$1</Link>'
+          $releaseGroup = [regex]::Replace($releaseGroup, $linkPattern, $linkReplacement, 1)
+          $uiSource = $uiSource.Substring(0, $releaseGroupMatch.Index) + $releaseGroup + $uiSource.Substring($releaseGroupMatch.Index + $releaseGroupMatch.Length)
+          Set-Content -Path $uiProject -Value $uiSource -NoNewline
 
           # Legacy libjpeg expects the pre-UCRT __iob_func symbol.
           $jpegCompat = "client-source/source/EterLib/JpegFile.cpp"
